@@ -1,7 +1,16 @@
+import argparse
+
+parser = argparse.ArgumentParser(description='Record and play 1 minute audio')
+parser.add_argument('-k', action='store_true', help='use keyboard instead of GPIO')
+parser.add_argument('-d', default=15, help='recording duration (seconds)')
+parser.add_argument('-f', action='store_false', help='fake commands - print instead of running aplay/arecord')
+args = parser.parse_args()
 
 import platform
+import keyboard
 
-run_commands = 1
+run_commands = args.f
+force_keyboard = args.k
 
 if platform.machine() == 'x86_64':
     from fakegpio import GPIO
@@ -21,17 +30,18 @@ import random
 from datetime import datetime
 from time import sleep     # this lets us have a time delay (see line 15)  
 
-RECORDING_DURATION = 15 # TODO make this 60 seconds
+RECORDING_DURATION = args.d # TODO make this 60 seconds
 
-PATH_RECORDING = '/opt/pi/recordings' # TODO make this the USB stick
-PATH_PLAYBACK = '/opt/pi/moderated' # TODO make this the USB stick
+# depends on the 'usbmount' package 
+PATH_RECORDING = '/media/usb/recordings' 
+PATH_PLAYBACK = '/media/usb/moderated'
 
 PATH_START_BEEP = './beep1.wav'
 PATH_END_BEEP = './beep2.wav'
 PATH_END_PLAYBACK_BEEP = './beep3.wav'
 
-COMMAND_RECORD = "arecord --device=hw:1,0 --format S16_LE --rate 44100 -c1 -d{} {}" # duration + filename
-COMMAND_PLAY = "aplay {}" # filename
+COMMAND_RECORD = "arecord --device=default:CARD=U0x4b40x306 --format S16_LE --rate 44100 -c1 -d{} {}" # duration + filename
+COMMAND_PLAY = "aplay --device=default:CARD=U0x4b40x306 {}" # filename
 
 STATE_WAITING = 0
 STATE_PLAYING = 1
@@ -43,12 +53,16 @@ STATE_RECORDING_ENDED = 5
 state = STATE_WAITING
 
 def is_play_pressed():
-    return GPIO.input(PLAY_BUTTON)
-    # return keyboard.is_pressed('p')
-    
+    if force_keyboard:
+        return keyboard.is_pressed('p')
+    else:
+        return GPIO.input(PLAY_BUTTON)
+
 def is_record_pressed():
-    return GPIO.input(RECORD_BUTTON)
-    # return keyboard.is_pressed('r')
+    if force_keyboard:
+        return keyboard.is_pressed('r')
+    else:
+        return GPIO.input(RECORD_BUTTON)
 
 def get_current_timestamp():
     current_datetime = datetime.utcnow()
