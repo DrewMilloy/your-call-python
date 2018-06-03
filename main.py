@@ -3,6 +3,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Record and play 1 minute audio')
 parser.add_argument('-k', action='store_true', help='use keyboard instead of GPIO')
 parser.add_argument('-d', default=15, help='recording duration (seconds)')
+parser.add_argument('-u', action='store_true', help='Store to USB drive')
 parser.add_argument('-f', action='store_false', help='fake commands - print instead of running aplay/arecord')
 args = parser.parse_args()
 
@@ -16,26 +17,30 @@ if platform.machine() == 'x86_64':
     from fakegpio import GPIO
     run_commands = 0
 else:
-    import RPi.GPIO as GPIO 
-    
+    import RPi.GPIO as GPIO
+
 PLAY_BUTTON = 24
 RECORD_BUTTON = 25
 
-GPIO.setmode(GPIO.BCM)     # set up BCM GPIO numbering  
-GPIO.setup(PLAY_BUTTON, GPIO.IN)
-GPIO.setup(RECORD_BUTTON, GPIO.IN)
+GPIO.setmode(GPIO.BCM)     # set up BCM GPIO numbering
+GPIO.setup(PLAY_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(RECORD_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 import os
 import random
 from datetime import datetime
-from time import sleep     # this lets us have a time delay (see line 15)  
+from time import sleep     # this lets us have a time delay (see line 15)
 
 RECORDING_DURATION = args.d # TODO make this 60 seconds
 
-# depends on the 'usbmount' package 
-PATH_RECORDING = '/media/usb/recordings' 
-PATH_PLAYBACK = '/media/usb/moderated'
+# depends on the 'usbmount' package
+PATH_RECORDING = '/home/pi/audio'
+PATH_PLAYBACK = '/home/pi/audio'
+if args.u:
+    PATH_RECORDING = '/media/usb/recordings'
+    PATH_PLAYBACK = '/media/usb/moderated'
 
+PATH_PROMPT = './prompt.wav'
 PATH_START_BEEP = './beep1.wav'
 PATH_END_BEEP = './beep2.wav'
 PATH_END_PLAYBACK_BEEP = './beep3.wav'
@@ -89,14 +94,14 @@ def execute_command(command):
 
 try:
     while True:
-        if state == STATE_WAITING:            # this will carry on until you hit CTRL+C  
-            if is_play_pressed(): 
-                print ("Starting Playback")  
+        if state == STATE_WAITING:            # this will carry on until you hit CTRL+C
+            if is_play_pressed():
+                print ("Starting Playback")
                 state = STATE_PLAYING
             elif is_record_pressed():
                 print ("Starting Recording")
                 state = STATE_PROMPT_FOR_RECORDING
-            sleep(0.1)         # wait 0.1 seconds  
+            sleep(0.1)         # wait 0.1 seconds
         elif state == STATE_PLAYING:
             # find a recording
             file_to_play = os.path.join(PATH_PLAYBACK, choose_a_file())
@@ -108,6 +113,7 @@ try:
             state = STATE_WAITING
         elif state == STATE_PROMPT_FOR_RECORDING:
             # play the record prompt
+            play_audio_file(PATH_PROMPT)
             play_audio_file(PATH_START_BEEP)
             state = STATE_RECORDING
             # record x minutes of audio
@@ -117,5 +123,5 @@ try:
             # play end tone
             play_audio_file(PATH_END_BEEP)
             state = STATE_WAITING
-finally: 
+finally:
     GPIO.cleanup()
