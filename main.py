@@ -35,7 +35,7 @@ RECORDING_DURATION = args.d # TODO make this 60 seconds
 
 # depends on the 'usbmount' package
 BASE_PATH_FALLBACK = '/home/pi/audio'
-USB_PATH_PARENT = '/var/run/usbmount'
+USB_PATH_PARENT = '/media/usb'
 
 PATH_RECORDING = 'recordings'
 PATH_PLAYBACK = 'moderated'
@@ -62,7 +62,7 @@ state = STATE_WAITING
 def get_usb_folder():
     usb_paths = os.listdir(USB_PATH_PARENT)
     if len(usb_paths) > 0:
-        return usb_paths[0]
+        return USB_PATH_PARENT
     else:
         return BASE_PATH_FALLBACK
 
