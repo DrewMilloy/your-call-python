@@ -1,0 +1,10 @@
+[Unit]
+Description=Your Call Service
+
+[Service]
+ExecStart=/usr/local/bin/your-call-python/main.py -u
+Type=idle
+
+[Install]
+WantedBy=multi-user.target
+Alias=your-call.service

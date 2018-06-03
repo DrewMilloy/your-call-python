@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 import argparse
 
 parser = argparse.ArgumentParser(description='Record and play 1 minute audio')
