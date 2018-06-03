@@ -4,7 +4,6 @@ import argparse
 parser = argparse.ArgumentParser(description='Record and play 1 minute audio')
 parser.add_argument('-k', action='store_true', help='use keyboard instead of GPIO')
 parser.add_argument('-d', default=15, help='recording duration (seconds)')
-parser.add_argument('-u', action='store_true', help='Store to USB drive')
 parser.add_argument('-f', action='store_false', help='fake commands - print instead of running aplay/arecord')
 args = parser.parse_args()
 
@@ -35,11 +34,11 @@ from time import sleep     # this lets us have a time delay (see line 15)
 RECORDING_DURATION = args.d # TODO make this 60 seconds
 
 # depends on the 'usbmount' package
-PATH_RECORDING = '/home/pi/audio'
-PATH_PLAYBACK = '/home/pi/audio'
-if args.u:
-    PATH_RECORDING = '/media/usb/recordings'
-    PATH_PLAYBACK = '/media/usb/moderated'
+BASE_PATH_FALLBACK = '/home/pi/audio'
+USB_PATH_PARENT = '/var/run/usbmount'
+
+PATH_RECORDING = 'recordings'
+PATH_PLAYBACK = 'moderated'
 
 PATH_LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -60,6 +59,13 @@ STATE_RECORDING_ENDED = 5
 
 state = STATE_WAITING
 
+def get_usb_folder():
+    usb_paths = os.listdir(USB_PATH_PARENT)
+    if len(usb_paths) > 0:
+        return usb_paths[0]
+    else:
+        return BASE_PATH_FALLBACK
+
 def is_play_pressed():
     if force_keyboard:
         return keyboard.is_pressed('p')
@@ -78,7 +84,7 @@ def get_current_timestamp():
 
 def choose_a_file():
     list_of_files = os.listdir(PATH_PLAYBACK)
-    return random.choice (list_of_files)
+    return random.choice (list_of_files) if list_of_files else None
 
 def play_local_audio_file(local_file_to_play):
     absolute_path = os.path.join(PATH_LOCAL_DIR, local_file_to_play)
@@ -111,9 +117,12 @@ try:
             sleep(0.1)         # wait 0.1 seconds
         elif state == STATE_PLAYING:
             # find a recording
-            file_to_play = os.path.join(PATH_PLAYBACK, choose_a_file())
-            # play the recording
-            play_audio_file(file_to_play)
+            playback_path = os.path.join(get_usb_folder(), PATH_PLAYBACK)
+            chosen_file = choose_a_file()
+            if chosen_file:
+                file_to_play = os.path.join(playback_path, chosen_file)
+                # play the recording
+                play_audio_file(file_to_play)
             state = STATE_PLAYBACK_ENDED
             # play some kind of tone
             play_local_audio_file(PATH_END_PLAYBACK_BEEP)
@@ -124,7 +133,8 @@ try:
             play_local_audio_file(PATH_START_BEEP)
             state = STATE_RECORDING
             # record x minutes of audio
-            file_to_record = os.path.join(PATH_RECORDING, get_current_timestamp() + ".wav")
+            recording_path = os.path.join(get_usb_folder(), PATH_RECORDING)
+            file_to_record = os.path.join(recording_path, get_current_timestamp() + ".wav")
             record_audio_file(file_to_record)
             state = STATE_RECORDING_ENDED
             # play end tone
