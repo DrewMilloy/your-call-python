@@ -32,6 +32,8 @@ sudo udevadm control --reload-rules
 
 Then the USB drive should mount automatically at '/media/usb/'
 
+[source: https://www.axllent.org/docs/view/auto-mounting-usb-storage/]
+
 ## Running this program
 
 ```
@@ -57,3 +59,5 @@ Set up rc.d to run it at startup:
 ```
 sudo update-rc.d your-call.sh defaults
 ```
+
+[source: http://blog.scphillips.com/posts/2013/07/getting-a-python-script-to-run-in-the-background-as-a-service-on-boot/]
