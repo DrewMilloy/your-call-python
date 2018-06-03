@@ -22,7 +22,15 @@ pip3 install -r pip_versions.txt
 
 ## Setting up auto-mount of USB drives
 
+Copy the `11-usb-drive-auto-mount.rules` file into `/etc/udev/rules.d/`
 
+Reload the udev rules:
+
+```
+sudo udevadm control --reload-rules
+```
+
+Then the USB drive should mount automatically at '/media/usb/'
 
 ## Running this program
 
@@ -37,3 +45,5 @@ optional arguments:
   -d D        recording duration (seconds)
   -f          fake commands - print instead of running aplay/arecord
 ```
+
+## Setting up this program to run as a service on startup
