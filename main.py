@@ -82,8 +82,8 @@ def get_current_timestamp():
     current_datetime = datetime.utcnow()
     return current_datetime.strftime('%Y%m%d-%H%M%S')
 
-def choose_a_file():
-    list_of_files = os.listdir(PATH_PLAYBACK)
+def choose_a_file(folder):
+    list_of_files = os.listdir(folder)
     return random.choice (list_of_files) if list_of_files else None
 
 def play_local_audio_file(local_file_to_play):
@@ -118,7 +118,7 @@ try:
         elif state == STATE_PLAYING:
             # find a recording
             playback_path = os.path.join(get_usb_folder(), PATH_PLAYBACK)
-            chosen_file = choose_a_file()
+            chosen_file = choose_a_file(playback_path)
             if chosen_file:
                 file_to_play = os.path.join(playback_path, chosen_file)
                 # play the recording
