@@ -41,10 +41,12 @@ if args.u:
     PATH_RECORDING = '/media/usb/recordings'
     PATH_PLAYBACK = '/media/usb/moderated'
 
-PATH_PROMPT = './prompt.wav'
-PATH_START_BEEP = './beep1.wav'
-PATH_END_BEEP = './beep2.wav'
-PATH_END_PLAYBACK_BEEP = './beep3.wav'
+PATH_LOCAL_DIR = os.path.dirname(os.path.realpath(__file__))
+
+PATH_PROMPT = 'prompt.wav'
+PATH_START_BEEP = 'beep1.wav'
+PATH_END_BEEP = 'beep2.wav'
+PATH_END_PLAYBACK_BEEP = 'beep3.wav'
 
 COMMAND_RECORD = "arecord --device=default:CARD=U0x4b40x306 --format S16_LE --rate 44100 -c1 -d{} {}" # duration + filename
 COMMAND_PLAY = "aplay --device=default:CARD=U0x4b40x306 {}" # filename
@@ -78,6 +80,10 @@ def choose_a_file():
     list_of_files = os.listdir(PATH_PLAYBACK)
     return random.choice (list_of_files)
 
+def play_local_audio_file(local_file_to_play):
+    absolute_path = os.path.join(PATH_LOCAL_DIR, local_file_to_play)
+    play_audio_file(absolute_path)
+
 def play_audio_file(file_to_play):
     play_command = COMMAND_PLAY.format(file_to_play)
     execute_command(play_command)
@@ -110,19 +116,19 @@ try:
             play_audio_file(file_to_play)
             state = STATE_PLAYBACK_ENDED
             # play some kind of tone
-            play_audio_file(PATH_END_PLAYBACK_BEEP)
+            play_local_audio_file(PATH_END_PLAYBACK_BEEP)
             state = STATE_WAITING
         elif state == STATE_PROMPT_FOR_RECORDING:
             # play the record prompt
-            play_audio_file(PATH_PROMPT)
-            play_audio_file(PATH_START_BEEP)
+            play_local_audio_file(PATH_PROMPT)
+            play_local_audio_file(PATH_START_BEEP)
             state = STATE_RECORDING
             # record x minutes of audio
             file_to_record = os.path.join(PATH_RECORDING, get_current_timestamp() + ".wav")
             record_audio_file(file_to_record)
             state = STATE_RECORDING_ENDED
             # play end tone
-            play_audio_file(PATH_END_BEEP)
+            play_local_audio_file(PATH_END_BEEP)
             state = STATE_WAITING
 finally:
     GPIO.cleanup()
