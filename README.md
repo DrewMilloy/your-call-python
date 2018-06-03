@@ -47,3 +47,13 @@ optional arguments:
 ```
 
 ## Setting up this program to run as a service on startup
+
+Copy/clone this whole `your-call-python` folder into `/usr/local/bin/`
+
+Copy the `your-call.sh` file into `/etc/init.d`
+
+Set up rc.d to run it at startup:
+
+```
+sudo update-rc.d your-call.sh defaults
+```
